@@ -1,20 +1,16 @@
 #include <SoftwareSerial.h>
-#include <ESP8266WiFi.h>
-#include <ThingSpeak.h>
 
-#define RX 10
-#define TX 11
 
-#define SSID "V2023"
-#define PASSWORD "nithish@123"
+#define RX 5
+#define TX 6
 
-#define THINGSPEAK_API_KEY "YKF5WO4QNJUFAYTF"
+
 
 #define SOIL_MOISTURE_PIN A1
 #define PH_SENSOR_PIN A3
 
 SoftwareSerial espSerial(RX, TX);
-WiFiClient client;
+
 
 int soilMoistureValue = 0;
 float pHValue = 0.0;
@@ -22,8 +18,7 @@ float pHValue = 0.0;
 void setup() {
   Serial.begin(9600);
   espSerial.begin(115200);
-  connectToWiFi();
-  ThingSpeak.begin(client);
+  
 }
 
 void loop() {
@@ -33,26 +28,16 @@ void loop() {
 
   Serial.print("Soil Moisture: ");
   Serial.println(soilMoistureValue);
-
+  espSerial.write(soilMoistureValue);
   Serial.print("pH Value: ");
   Serial.println(pHValue);
-
-  uploadDataToThingSpeak(soilMoistureValue, pHValue);
+  espSerial.write(pHValue);
+  
 
   delay(5000);
 }
 
-void connectToWiFi() {
-  Serial.println("Connecting to WiFi...");
-  WiFi.begin(SSID, PASSWORD);
 
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(1000);
-    Serial.println("Connecting to WiFi...");
-  }
-
-  Serial.println("Connected to WiFi!");
-}
 
 int readSoilMoisture() {
   int sensorValue = analogRead(A0);
@@ -67,14 +52,4 @@ float readpH() {
   return pH;
 }
 
-void uploadDataToThingSpeak(int soilMoisture, float pH) {
-  ThingSpeak.setField(1, soilMoisture);
-  ThingSpeak.setField(2, pH);
-  int httpCode = ThingSpeak.writeFields(2202765, "6QOU5ODYA4CKR5VF");
 
-  if (httpCode == 200) {
-    Serial.println("Data uploaded to ThingSpeak successfully!");
-  } else {
-    Serial.println("Error uploading data to ThingSpeak. HTTP error code: " + String(httpCode));
-  }
-}
